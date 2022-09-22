@@ -1,22 +1,30 @@
 const express = require('express')
+const logger = require('morgan')
 
-// Create express instance
+// 创建express实例
 const app = express()
 
-// Require API routes
-const users = require('./routes/users')
+// 在终端打印日志
+app.use(logger('dev'))
+// 解析 JSON 格式的请求体数据
+app.use(express.json())
+// 解析 URL-encoded 格式的请求体数据
+app.use(express.urlencoded({ extended: true }))
 
-// Import API Routes
-app.use(users)
+// 路由
+const apiRouter = require('./routes/api')
+const handleApiRouter = require('./routes/handle-api')
 
-// Export express app
+app.use('/handle', handleApiRouter) // api接口管理
+app.use('/', apiRouter) // api接口服务
+
+// 导出 express app
 module.exports = app
 
-// Start standalone server if directly running
+// 如果直接运行，则启动独立服务器
 if (require.main === module) {
   const port = process.env.PORT || 3001
   app.listen(port, () => {
-    // eslint-disable-next-line no-console
     console.log(`API server listening on port ${port}`)
   })
 }
