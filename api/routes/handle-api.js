@@ -7,9 +7,6 @@ const {addAPi, getApi, getOneAPi, deleteOneAPi} = require('../controllers/handle
  * 管理API的 路由
  */
 
-// 获取接口数据列表
-router.get('/', getApi)
-
 // 获取某接口数据
 router.get('/:name', getOneAPi)
 
@@ -18,5 +15,8 @@ router.post('/', addAPi)
 
 // 删除
 router.delete('/:name', deleteOneAPi)
+
+// 获取接口数据(列表)
+router.get('/', getApi)
 
 module.exports = router

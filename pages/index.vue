@@ -3,36 +3,30 @@
     <!-- 标题 -->
     <p class="title">
       <span>项目名</span>
-      <b-button size="sm"  variant="success" @click="showAdd">新建接口</b-button>
-      <b-button size="sm"  variant="info" @click="getData">刷新</b-button>
+      <b-button size="sm" variant="success" @click="showAdd">新建接口</b-button>
+      <b-button size="sm" variant="info" @click="getData">刷新</b-button>
     </p>
 
     <!-- 表格 -->
     <b-table striped hover :items="items" :fields="fields">
       <!-- 序号 -->
       <template #cell(index)="row">{{row.index+1}}</template>
+      <!-- 路径 -->
+      <template #cell(path)="row">{{browserBaseURL + row.item.path}}</template>
       <!-- 操作栏 -->
       <template #cell(todo)="row">
-        <b-button size="sm"  variant="warning" @click="showEdit(row.item)">修改</b-button>
-        <b-button size="sm"  variant="danger" @click="showDelete(row.item)">删除</b-button>
-        <b-button size="sm"  variant="info" @click="row.toggleDetails">
-          {{ row.detailsShowing ? '关闭' : '查看'}}
-        </b-button>
-      </template>
-
-      <!-- 详情 -->
-      <template #row-details="row">
-        详情
+        <b-button size="sm" variant="warning" @click="showEdit(row.item)">修改</b-button>
+        <b-button size="sm" variant="danger" @click="showDelete(row.item)">删除</b-button>
+        <b-button size="sm" variant="info" @click="showDetail(row.item)">查看</b-button>
       </template>
     </b-table>
 
     <!-- 新建&&修改 -->
     <b-modal
-      v-model="modalShow"
-      ref="modal"
-      title="新建接口"
-      @hidden="resetModal"
-      @ok="handleOk"
+      v-model="formModalShow"
+      :title="modalFor==='add'?'新建接口':'修改接口'"
+      @hidden="resetFormModal"
+      @ok="handleFormOk"
       size="lg"
     >
       <form ref="form" @submit.stop.prevent="handleSubmit">
@@ -42,26 +36,29 @@
           invalid-feedback="请输入路径"
           :state="pathState"
         >
-          <b-form-input
-            id="path-input"
-            v-model="path"
-            :state="pathState"
-            required
-          ></b-form-input>
+          <b-input-group :prepend="browserBaseURL">
+            <b-form-input
+              id="path-input"
+              v-model="path"
+              :state="pathState"
+              required
+            ></b-form-input>
+          </b-input-group>
         </b-form-group>
 
         <b-form-group
           label="方法"
           label-for="method-input"
-          invalid-feedback="请输入方法"
+          invalid-feedback="请选择方法"
           :state="methodState"
         >
-          <b-form-input
+          <b-form-select
             id="method-input"
+            :options="methods"
             v-model="method"
             :state="methodState"
             required
-          ></b-form-input>
+          ></b-form-select>
         </b-form-group>
 
         <b-form-group
@@ -70,26 +67,64 @@
           invalid-feedback="请输入响应内容"
           :state="contentState"
         >
-          <b-form-input
+          <b-form-textarea
             id="content-input"
             v-model="content"
             :state="contentState"
             required
-          ></b-form-input>
+            rows="10"
+            max-rows="10"
+          ></b-form-textarea>
         </b-form-group>
       </form>
 
       <template #modal-cancel>取消</template>
       <template #modal-ok>确定</template>
     </b-modal>
+
+    <!-- 删除 -->
+    <b-modal
+      v-model="deleteModalShow"
+      title="删除接口"
+      @ok="handleDeleteOk"
+    >
+      确定删除改接口吗？
+      <template #modal-cancel>取消</template>
+      <template #modal-ok>确定</template>
+    </b-modal>
+
+    <!-- 查看 -->
+    <b-modal
+      v-model="detailModalShow"
+      title="接口响应内容"
+      @hidden="resetDetailModal"
+      size="lg"
+    >
+      <pre>{{apiDetail}}</pre>
+      <template #modal-cancel>取消</template>
+      <template #modal-ok>确定</template>
+    </b-modal>
+
   </div>
 </template>
 
 <script>
+import {splitStr} from '@/api/settings'
+
 export default {
   layout: 'common-layout',
+  async asyncData({ $axios }) {
+    let {data} = await $axios.$get('/api/handle')
+    
+    // 返回的数据会传递到data()
+    return { 
+      items: data, 
+      browserBaseURL: $axios.defaults.baseURL + '/api'
+    }
+  },
   data() {
     return {
+      browserBaseURL: '',
       // 表格数据
       fields: [
         {key: 'index', label: '#'},
@@ -100,19 +135,38 @@ export default {
       items: [],
 
       // 新建&&修改
-      modalShow: false,
+      formModalShow: false,
       modalFor: 'add', // 'edit'
+      methods: [
+        {value: 'GET', text: 'GET'},
+        {value: 'POST', text: 'POST'},
+        {value: 'PUT', text: 'PUT'},
+        {value: 'DELETE', text: 'DELETE'},
+        {value: 'OPTIONS', text: 'OPTIONS'},
+        {value: 'HEAD', text: 'HEAD'},
+        {value: 'TRACE', text: 'TRACE'},
+        {value: 'CONNECT', text: 'CONNECT'}
+      ],
+
       // 表单字段
       path: '',
       method: '',
       content: '',
       pathState: null,
       methodState: null,
-      contentState: null
+      contentState: null,
+
+      // 删除
+      deleteModalShow: false,
+      deleteAPI: {},
+
+      // 查看
+      detailModalShow: false,
+      apiDetail: ''
     }
   },
   mounted() {
-    this.getData()
+    this.browserBaseURL = window.location.href + 'api'
   },
   methods: {
     /**
@@ -120,6 +174,14 @@ export default {
      */
     async getData() {
       let {data: res} = await this.$axios.get('/api/handle')
+      if(!res.flag) {
+        this.$bvToast.toast(res.message, {
+          title: '提示',
+          variant: 'danger',
+          autoHideDelay: 2500
+        })
+        return 
+      }
       this.items = res.data
     },
 
@@ -131,7 +193,7 @@ export default {
       this.pathState = valid
       return valid
     },
-    resetModal() {
+    resetFormModal() {
       this.path = ''
       this.method = ''
       this.content = ''
@@ -139,7 +201,7 @@ export default {
       this.methodState = null
       this.contentState = null
     },
-    handleOk(bvModalEvent) {
+    handleFormOk(bvModalEvent) {
       // 防止模态框关闭
       bvModalEvent.preventDefault()
       // 提交
@@ -158,10 +220,6 @@ export default {
         // 修改
         this.handleEdit()
       }
-      // 关闭模态框
-      this.$nextTick(() => {
-        this.modalShow = false
-      })
     },
 
     /**
@@ -169,10 +227,33 @@ export default {
      */
     showAdd() {
       this.modalFor = 'add'
-      this.modalShow = true
+      this.formModalShow = true
     },
-    handleAdd() {
-
+    async handleAdd() {
+      let {data: res} = await this.$axios.post('/api/handle', {
+        path: this.path,
+        method: this.method,
+        content: this.content
+      })
+      if(!res.flag) {
+        this.$bvToast.toast(res.message, {
+          title: '提示',
+          variant: 'danger',
+          autoHideDelay: 2500
+        })
+        return
+      }
+      this.$bvToast.toast(res.message, {
+        title: '提示',
+        variant: 'success',
+        autoHideDelay: 2500
+      })
+      // 刷新数据
+      this.getData()
+      // 关闭模态框
+      this.$nextTick(() => {
+        this.formModalShow = false
+      })
     },
 
     /**
@@ -180,21 +261,96 @@ export default {
      */
     showEdit(item) {
       this.modalFor = 'edit'
-      this.modalShow = true
+      this.formModalShow = true
       // 赋值
       this.path = item.path
+      this.method = item.method
+      this.content = item.content
       
     },
-    handleEdit() {
-
+    async handleEdit() {
+      let {data: res} = await this.$axios.post('/api/handle', {
+        path: this.path,
+        method: this.method,
+        content: this.content
+      })
+      if(!res.flag) {
+        this.$bvToast.toast(res.message, {
+          title: '提示',
+          variant: 'danger',
+          autoHideDelay: 2500
+        })
+        return
+      }
+      this.$bvToast.toast(res.message, {
+        title: '提示',
+        variant: 'success',
+        autoHideDelay: 2500
+      })
+      // 刷新数据
+      this.getData()
+      // 关闭模态框
+      this.$nextTick(() => {
+        this.formModalShow = false
+      })
     },
 
     /**
      * 删除
      */
     showDelete(item) {
-      
+      this.deleteAPI = item
+      this.deleteModalShow = true
+    },
+    async handleDeleteOk() {
+      const {deleteAPI} = this
+      // 文件名
+      const name = deleteAPI.path.split('/').join(splitStr) + '.' + deleteAPI.method
+      let {data: res} = await this.$axios.delete('/api/handle/' + name)
+      if(!res.flag) {
+        this.$bvToast.toast(res.message, {
+          title: '提示',
+          variant: 'danger',
+          autoHideDelay: 2500
+        })
+        return
+      }
+      this.$bvToast.toast(res.message, {
+        title: '提示',
+        variant: 'success',
+        autoHideDelay: 2500
+      })
+      // 刷新数据
+      this.getData()
+      // 关闭模态框
+      this.$nextTick(() => {
+        this.deleteModalShow = false
+      })
+    },
+
+    /**
+     * 查看
+     */
+    async showDetail(item) {
+      // 文件名
+      const name = item.path.split('/').join(splitStr) + '.' + item.method
+      let {data: res} = await this.$axios.get('/api/handle/' + name)
+      if(!res.flag) {
+        this.$bvToast.toast(res.message, {
+          title: '提示',
+          variant: 'danger',
+          autoHideDelay: 2500
+        })
+        return
+      }
+      this.apiDetail = res
+      console.log(res)
+      this.detailModalShow = true
+    },
+    resetDetailModal() {
+      this.apiDetail = ''
     }
+
   }
 }
 </script>
