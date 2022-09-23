@@ -12,7 +12,7 @@
       <!-- 序号 -->
       <template #cell(index)="row">{{row.index+1}}</template>
       <!-- 路径 -->
-      <template #cell(path)="row">{{browserBaseURL + row.item.path}}</template>
+      <template #cell(path)="row">{{baseURL + row.item.path}}</template>
       <!-- 操作栏 -->
       <template #cell(todo)="row">
         <b-button size="sm" variant="warning" @click="showEdit(row.item)">修改</b-button>
@@ -36,7 +36,7 @@
           invalid-feedback="请输入路径"
           :state="pathState"
         >
-          <b-input-group :prepend="browserBaseURL">
+          <b-input-group :prepend="baseURL">
             <b-form-input
               id="path-input"
               v-model="path"
@@ -110,21 +110,22 @@
 
 <script>
 import {splitStr} from '@/api/settings'
+const dirName = 'test'
 
 export default {
   layout: 'common-layout',
   async asyncData({ $axios }) {
-    let {data} = await $axios.$get('/api/handle')
+    let {data} = await $axios.$get(`/api/handle/${dirName}`)
     
     // 返回的数据会传递到data()
     return { 
       items: data, 
-      browserBaseURL: $axios.defaults.baseURL + '/api'
+      baseURL: $axios.defaults.baseURL + `/api/${dirName}`
     }
   },
   data() {
     return {
-      browserBaseURL: '',
+      baseURL: '',
       // 表格数据
       fields: [
         {key: 'index', label: '#'},
@@ -166,14 +167,14 @@ export default {
     }
   },
   mounted() {
-    this.browserBaseURL = window.location.href + 'api'
+    this.baseURL = window.location.href + `api/${dirName}`
   },
   methods: {
     /**
      * 获取数据
      */
     async getData() {
-      let {data: res} = await this.$axios.get('/api/handle')
+      let {data: res} = await this.$axios.get(`/api/handle/${dirName}`)
       if(!res.flag) {
         this.$bvToast.toast(res.message, {
           title: '提示',
@@ -230,7 +231,7 @@ export default {
       this.formModalShow = true
     },
     async handleAdd() {
-      let {data: res} = await this.$axios.post('/api/handle', {
+      let {data: res} = await this.$axios.post(`/api/handle/${dirName}`, {
         path: this.path,
         method: this.method,
         content: this.content
@@ -269,7 +270,7 @@ export default {
       
     },
     async handleEdit() {
-      let {data: res} = await this.$axios.post('/api/handle', {
+      let {data: res} = await this.$axios.post(`/api/handle/${dirName}`, {
         path: this.path,
         method: this.method,
         content: this.content
@@ -305,8 +306,8 @@ export default {
     async handleDeleteOk() {
       const {deleteAPI} = this
       // 文件名
-      const name = deleteAPI.path.split('/').join(splitStr) + '.' + deleteAPI.method
-      let {data: res} = await this.$axios.delete('/api/handle/' + name)
+      const fileName = deleteAPI.path.split('/').join(splitStr) + '.' + deleteAPI.method
+      let {data: res} = await this.$axios.delete(`/api/handle/${dirName}/${fileName}`)
       if(!res.flag) {
         this.$bvToast.toast(res.message, {
           title: '提示',
@@ -333,8 +334,8 @@ export default {
      */
     async showDetail(item) {
       // 文件名
-      const name = item.path.split('/').join(splitStr) + '.' + item.method
-      let {data: res} = await this.$axios.get('/api/handle/' + name)
+      const fileName = item.path.split('/').join(splitStr) + '.' + item.method
+      let {data: res} = await this.$axios.get(`/api/handle/${dirName}/${fileName}`)
       if(!res.flag) {
         this.$bvToast.toast(res.message, {
           title: '提示',
