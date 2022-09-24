@@ -1,4 +1,4 @@
-const {saveFile, getFile, readFile, deleteFile} = require('../dao/file')
+const {saveFile, editFile, getFile, readFile, deleteFile} = require('../dao/file')
 const {splitStr} = require('../settings')
 
 /**
@@ -26,6 +26,35 @@ exports.addAPi = async (req, res, next) => {
       flag: false,
       data: null,
       message: "创建接口失败"
+    })
+  }
+}
+
+/**
+ * 修改api接口
+ */
+ exports.editAPi = async (req, res, next) => {
+  // 文件夹
+  let {dirName} = req.params
+  //获取表单内容
+  let {path, method, content} = req.body
+  //修改文件
+  path = path.split('/').join(splitStr)
+  let fileName = `${path}.${method}`
+  const result = await editFile(dirName, fileName, content)
+  if(result) {
+    res.json({
+      status: 200,
+      flag: true,
+      data: null,
+      message: "修改接口成功"
+    })
+  }else {
+    res.json({
+      status: 500,
+      flag: false,
+      data: null,
+      message: "修改接口失败"
     })
   }
 }

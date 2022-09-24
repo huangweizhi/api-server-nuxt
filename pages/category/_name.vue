@@ -1,18 +1,27 @@
 <template>
   <div>
     <!-- 标题 -->
-    <div class="title">
-      <div>
+    <TableHeader>
+      <template v-slot:left>
         <nuxt-link to="/">项目</nuxt-link> / <span>{{dirName}}</span>
-      </div>
-      <div>
+      </template>
+      <template v-slot:right>
         <b-button size="sm" variant="info" @click="getData">刷新</b-button>
         <b-button size="sm" variant="success" @click="showAdd">新建接口</b-button>
-      </div>
-    </div>
+      </template>
+    </TableHeader>
 
     <!-- 表格 -->
     <b-table striped hover :items="items" :fields="fields">
+      <!-- 配置列 -->
+      <template #table-colgroup="scope">
+        <col
+          v-for="field in scope.fields"
+          :key="field.key"
+          :style="{ width: field.key === 'todo' ? '200px' : '' }"
+        >
+      </template>
+      
       <!-- 序号 -->
       <template #cell(index)="row">{{row.index+1}}</template>
       <!-- 路径 -->
@@ -37,7 +46,7 @@
         <b-form-group
           label="路径"
           label-for="path-input"
-          invalid-feedback="请输入路径"
+          :invalid-feedback="pathFeedback"
           :state="pathState"
         >
           <b-input-group :prepend="baseURL">
@@ -45,7 +54,7 @@
               id="path-input"
               v-model="path"
               :state="pathState"
-              required
+              autocomplete="off"
             ></b-form-input>
           </b-input-group>
         </b-form-group>
@@ -61,21 +70,19 @@
             :options="methods"
             v-model="method"
             :state="methodState"
-            required
           ></b-form-select>
         </b-form-group>
 
         <b-form-group
-          label="响应内容"
+          label="响应内容( json格式 )"
           label-for="content-input"
-          invalid-feedback="请输入响应内容"
+          :invalid-feedback="contentFeedback"
           :state="contentState"
         >
           <b-form-textarea
             id="content-input"
             v-model="content"
             :state="contentState"
-            required
             rows="10"
             max-rows="10"
           ></b-form-textarea>
@@ -114,6 +121,7 @@
 
 <script>
 import {splitStr} from '@/api/settings'
+import {isJSON} from '@/utils'
 
 export default {
   layout: 'common-layout',
@@ -160,9 +168,15 @@ export default {
       path: '',
       method: '',
       content: '',
+
       pathState: null,
       methodState: null,
       contentState: null,
+      pathFeedback: '',
+      contentFeedback: '',
+
+      // 修改
+      editAPI: {},
 
       // 删除
       deleteModalShow: false,
@@ -194,12 +208,50 @@ export default {
     },
 
     /**
+     * 字段校验
+     */
+    pathCheck() {
+      if (this.path) {
+        if(/^\/[A-Za-z0-9\-\/_]+$/.test(this.path)) {
+          return true
+        }else {
+          this.pathFeedback = '路径以 / 开头，由  字母 数字 - _ /  构成'
+          return false
+        }
+      }
+      this.pathFeedback = '请输入路径'
+      return false
+    },
+    methodCheck() {
+      if (this.method) {
+        return true
+      }
+      return false
+    },
+    contentCheck() {
+      let {content} = this
+      if (content) {
+        if(isJSON(content)) {
+          this.contentFeedback = ''
+          return true
+        }else {
+          this.contentFeedback = '格式不正确'
+          return false
+        }
+      }
+      this.contentFeedback = '请输入响应内容'
+      return false
+    },
+
+    /**
      * 新建&&修改
      */
     checkFormValidity() {
-      const valid = this.$refs.form.checkValidity()
-      this.pathState = valid
-      return valid
+      // const valid = this.$refs.form.checkValidity()
+      this.pathState = this.pathCheck()
+      this.methodState = this.methodCheck()
+      this.contentState = this.contentCheck()
+      return this.contentState && this.methodState && this.pathState
     },
     resetFormModal() {
       this.path = ''
@@ -267,17 +319,21 @@ export default {
     /**
      * 修改
      */
-    showEdit(item) {
+    async showEdit(item) {
       this.modalFor = 'edit'
       this.formModalShow = true
       // 赋值
       this.path = item.path
       this.method = item.method
-      this.content = item.content
-      
+      // 缓存旧的数据
+      this.editAPI = item
+      // 获取接口内容
+      const fileName = this.path.split('/').join(splitStr) + '.' + this.method
+      const {data: res} = await this.$axios.get(`/api/handle/api/${this.dirName}/${fileName}`)
+      this.content = JSON.stringify(res)
     },
     async handleEdit() {
-      let {data: res} = await this.$axios.post(`/api/handle/api/${this.dirName}`, {
+      let {data: res} = await this.$axios.put(`/api/handle/api/${this.dirName}`, {
         path: this.path,
         method: this.method,
         content: this.content
@@ -290,11 +346,19 @@ export default {
         })
         return
       }
+      // 修改成功
       this.$bvToast.toast(res.message, {
         title: '提示',
         variant: 'success',
         autoHideDelay: 2500
       })
+      // 判断是否需要删除原来的API
+      const {editAPI} = this
+      if(editAPI.path !== this.path || editAPI.method !== this.method) {
+        // 删除原来的API
+        const fileName = editAPI.path.split('/').join(splitStr) + '.' + editAPI.method
+        await this.$axios.delete(`/api/handle/api/${this.dirName}/${fileName}`)
+      }
       // 刷新数据
       this.getData()
       // 关闭模态框
@@ -355,13 +419,5 @@ export default {
 </script>
 
 <style scoped>
-.title {
-  margin: 1rem 0 0.5rem 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.title div span {
-  font-weight: 700;
-}
+
 </style>

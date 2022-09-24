@@ -1,4 +1,4 @@
-const {makeDir, deleteDir, getDir} = require('../dao/file')
+const {makeDir, deleteDir, getDir, renameDir} = require('../dao/file')
 
 /**
  * 添加分类
@@ -21,6 +21,31 @@ exports.addCategory = async (req, res, next) => {
       flag: false,
       data: null,
       message: "创建分类失败"
+    })
+  }
+}
+
+/**
+ * 修改分类
+ */
+ exports.editCategory = async (req, res, next) => {
+  // 文件夹
+  let {oldName, dirName} = req.body
+
+  const result = await renameDir(oldName, dirName)
+  if(result) {
+    res.json({
+      status: 200,
+      flag: true,
+      data: null,
+      message: "修改分类成功"
+    })
+  }else {
+    res.json({
+      status: 500,
+      flag: false,
+      data: null,
+      message: "修改分类失败"
     })
   }
 }

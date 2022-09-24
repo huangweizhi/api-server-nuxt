@@ -1,18 +1,27 @@
 <template>
   <div>
     <!-- 标题 -->
-    <div class="title">
-      <div>
+    <TableHeader>
+      <template v-slot:left>
         <span>项目</span>
-      </div>
-      <div>
+      </template>
+      <template v-slot:right>
         <b-button size="sm" variant="info" @click="getData">刷新</b-button>
         <b-button size="sm" variant="success" @click="showAdd">新建项目</b-button>
-      </div>
-    </div>
+      </template>
+    </TableHeader>
 
     <!-- 表格 -->
     <b-table striped hover :items="items" :fields="fields">
+      <!-- 配置列 -->
+      <template #table-colgroup="scope">
+        <col
+          v-for="field in scope.fields"
+          :key="field.key"
+          :style="{ width: field.key === 'todo' ? '200px' : '' }"
+        >
+      </template>
+
       <!-- 序号 -->
       <template #cell(index)="row">{{row.index+1}}</template>
       <!-- 操作栏 -->
@@ -35,17 +44,15 @@
         <b-form-group
           label="项目名"
           label-for="dir-name-input"
-          invalid-feedback="请输入项目名"
+          :invalid-feedback="dirNameFeedback"
           :state="dirNameState"
         >
-          <b-input-group>
-            <b-form-input
-              id="dir-name-input"
-              v-model="dirName"
-              :state="dirNameState"
-              required
-            ></b-form-input>
-          </b-input-group>
+          <b-form-input
+            id="dir-name-input"
+            v-model="dirName"
+            :state="dirNameState"
+            autocomplete="off"
+          ></b-form-input>
         </b-form-group>
       </form>
 
@@ -95,6 +102,7 @@ export default {
       // 表单字段
       dirName: '',
       dirNameState: null,
+      dirNameFeedback: '',
 
       // 删除
       deleteModalShow: false,
@@ -119,10 +127,28 @@ export default {
     },
 
     /**
+     * 字段校验
+     */
+    dirNameCheck() {
+      if (this.dirName) {
+        if(/^[A-Za-z0-9\-_]+$/.test(this.dirName)) {
+          return true
+        }else {
+          this.dirNameFeedback = '项目名只能由  字母 数字 - _  构成'
+          return false
+        }
+      }
+      this.dirNameFeedback = '请输入项目名'
+      return false
+    },
+
+    /**
      * 新建&&修改
      */
     checkFormValidity() {
-      const valid = this.$refs.form.checkValidity()
+      // const valid = this.$refs.form.checkValidity()
+      // 自定义校验方法
+      const valid = this.dirNameCheck()
       this.dirNameState = valid
       return valid
     },
@@ -191,11 +217,13 @@ export default {
       this.formModalShow = true
       // 赋值
       this.dirName = item.dirName
+      this.oldName = item.dirName
       
     },
     async handleEdit() {
-      let {data: res} = await this.$axios.post(`/api/handle/category`, {
-        dirName: this.dirName
+      let {data: res} = await this.$axios.put(`/api/handle/category`, {
+        dirName: this.dirName,
+        oldName: this.oldName
       })
       if(!res.flag) {
         this.$bvToast.toast(res.message, {
@@ -261,13 +289,5 @@ export default {
 </script>
 
 <style scoped>
-.title {
-  margin: 1rem 0 0.5rem 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.title div span {
-  font-weight: 700;
-}
+
 </style>

@@ -18,7 +18,11 @@ const {basePath} = require('../settings') // 文件存放路径
 exports.saveFile = (dirName, fileName, content) => {
   return new Promise((resolve, reject) => {
     const path = `${basePath}/${dirName}/${fileName}`
-
+    // 文件已存在
+    if(fs.existsSync(path)) {
+      resolve (false)
+      return
+    }
     fs.writeFile(path, content, (err) => {
       if(err) {
         console.error('保存文件:', err)
@@ -56,6 +60,28 @@ exports.getFile = (dirName) => {
       console.error('获取所有文件', err)
       resolve(false)
     }
+  })
+}
+
+/**
+ * 修改文件(覆盖原来内容)
+ * @param {String} dirName 文件夹名称
+ * @param {String} fileName 文件名
+ * @param {String} content 文件内容
+ * @returns Boolean
+ */
+ exports.editFile = (dirName, fileName, content) => {
+  return new Promise((resolve, reject) => {
+    const path = `${basePath}/${dirName}/${fileName}`
+
+    fs.writeFile(path, content, (err) => {
+      if(err) {
+        console.error('修改文件:', err)
+        resolve(false)
+        return
+      }
+      resolve(true)
+    })
   })
 }
 
@@ -111,7 +137,9 @@ exports.deleteFile = (dirName, fileName) => {
  */
 exports.makeDir = (dirName) => {
   return new Promise((resolve, reject) => {
-    fs.mkdir(`${basePath}/${dirName}`, (err) => {
+    const path = `${basePath}/${dirName}`
+    
+    fs.mkdir(path, (err) => {
       if(err) {
         resolve(false)
         return
@@ -143,6 +171,27 @@ exports.getDir = () => {
       console.error('获取文件夹列表', err)
       resolve(false)
     }
+  })
+}
+
+/**
+ * 文件夹重命名
+ * @param {String} oldName 
+ * @param {String} dirName 
+ * @returns Boolean
+ */
+ exports.renameDir = (oldName, dirName) => {
+  return new Promise((resolve, reject) => {
+    const oldPath = `${basePath}/${oldName}`
+    const path = `${basePath}/${dirName}`
+
+    fs.rename(oldPath, path, (err) => {
+      if(err) {
+        resolve(false)
+        return
+      }
+      resolve(true)
+    })
   })
 }
 
