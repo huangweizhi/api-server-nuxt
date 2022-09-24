@@ -11,8 +11,10 @@ app.use(express.urlencoded({ extended: true }))
 // 路由
 const apiRouter = require('./routes/api')
 const handleApiRouter = require('./routes/handle-api')
+const handleCategoryRouter = require('./routes/handle-category')
 
-app.use('/handle', handleApiRouter) // api接口管理
+app.use('/handle/category', handleCategoryRouter) // 分类管理
+app.use('/handle/api', handleApiRouter) // api接口管理
 app.use('/', apiRouter) // api接口服务
 
 

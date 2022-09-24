@@ -1,6 +1,9 @@
 {
-  "code": 0,
-  "flag": true,
-  "data": null,
-  "message": "注册成功"
+  "data": {
+    "name": "火星巴士"
+  },
+  "meta": {
+    "msg": "获取用户信息成功",
+    "status": 200
+  }
 }

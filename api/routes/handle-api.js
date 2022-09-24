@@ -7,13 +7,13 @@ const {addAPi, getApi, getOneAPi, deleteOneAPi} = require('../controllers/handle
  * 管理API的 路由
  */
 
-// 获取某接口数据dirName, fileName
+// 获取某接口数据
 router.get('/:dirName/:fileName', getOneAPi)
 
 // 添加接口
 router.post('/:dirName', addAPi)
 
-// 删除
+// 删除接口
 router.delete('/:dirName/:fileName', deleteOneAPi)
 
 // 获取接口数据(列表)
