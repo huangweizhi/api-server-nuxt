@@ -125,19 +125,20 @@ import {isJSON} from '@/utils'
 
 export default {
   layout: 'common-layout',
-  async asyncData({ $axios, params }) {
+  async asyncData({ $axios, params, env }) {
     const dirName = params.name
     let {data} = await $axios.$get(`/api/handle/api/${dirName}`)
     // 返回的数据会传递到data()
     return { 
       items: data, 
       baseURL: $axios.defaults.baseURL + `/api/${dirName}`,
-      dirName
+      dirName,
+      env
     }
   },
   data() {
     return {
-      // 路径
+      // 展示用的基础路径
       baseURL: '',
       dirName: '',
 
@@ -188,7 +189,12 @@ export default {
     }
   },
   mounted() {
-    this.baseURL = window.location.origin + `/api/${this.dirName}`
+    if(this.env.NODE_ENV === 'prod') {
+      this.baseURL = window.location.origin + `/mock/api/${this.dirName}`
+    }else {
+      this.baseURL = window.location.origin + `/api/${this.dirName}`
+    }
+    
   },
   methods: {
     /**
