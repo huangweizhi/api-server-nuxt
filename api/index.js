@@ -23,7 +23,7 @@ module.exports = app
 
 // 如果直接运行，则启动独立服务器
 if (require.main === module) {
-  const port = process.env.PORT || 3001
+  const port = process.env.PORT || 3101
   app.listen(port, () => {
     console.log(`API server listening on port ${port}`)
   })

@@ -22,3 +22,17 @@ export const isJSON = (str) => {
   return false
 
 }
+
+
+/**
+ * 控制台打印
+ */
+ export const consolePrint = () => {
+  const info =
+`API接口服务
+MIT License
+github: https://github.com/huangweizhi/api-server-nuxt.git
+gitee: https://gitee.com/weizhihuang/api-server-nuxt.git
+`
+  console.info(`%c${info}`, `color:#117a8b`)
+}

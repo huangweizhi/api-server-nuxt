@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "nuxt",
-    "build": "nuxt build",
-    "start": "nuxt start",
+    "dev": "cross-env NODE_ENV=dev nuxt",
+    "build": "cross-env NODE_ENV=prod nuxt build",
+    "start": "cross-env NODE_ENV=prod nuxt start",
     "generate": "nuxt generate"
   },
   "dependencies": {
@@ -13,6 +13,7 @@
     "bootstrap": "^4.6.1",
     "bootstrap-vue": "^2.21.2",
     "core-js": "^3.19.3",
+    "cross-env": "^7.0.3",
     "express": "^4.16.4",
     "nuxt": "^2.15.8",
     "vue": "^2.6.14",

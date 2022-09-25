@@ -75,6 +75,8 @@
 </template>
 
 <script>
+import {consolePrint} from '@/utils'
+
 export default {
   layout: 'common-layout',
   async asyncData({ $axios }) {
@@ -284,6 +286,9 @@ export default {
       this.$router.push('/category/'+item.dirName)
     }
 
+  },
+  mounted() {
+    consolePrint()
   }
 }
 </script>

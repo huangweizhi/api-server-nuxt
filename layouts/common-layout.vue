@@ -2,7 +2,7 @@
   <div>
     <!-- 导航 -->
     <b-navbar toggleable="lg" type="light" variant="light">
-      <b-navbar-brand href="/">
+      <b-navbar-brand href="#">
         <img src="@/static/logo.png" alt="Kitten">
         API接口服务
       </b-navbar-brand>
@@ -20,8 +20,6 @@
             <b-form-input size="sm" class="mr-sm-2" placeholder=""></b-form-input>
             <b-button size="sm" class="my-2 my-sm-0" variant="info">搜索</b-button>
           </b-nav-form> -->
-          
-          <b-nav-item href="https://www.wzblogs.top">火星巴士</b-nav-item>
         </b-navbar-nav>
       </b-collapse>
     </b-navbar>
