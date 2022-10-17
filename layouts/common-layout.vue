@@ -10,9 +10,10 @@
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
       <b-collapse id="nav-collapse" is-nav>
-        <!-- <b-navbar-nav>
-          <b-nav-item href="https://www.wzblogs.top">火星巴士</b-nav-item>
-        </b-navbar-nav> -->
+        <b-navbar-nav>
+          <b-nav-item to="/" :active="isActive('/')">JSON数据</b-nav-item>
+          <b-nav-item to="/image" :active="isActive('/image')">图片</b-nav-item>
+        </b-navbar-nav>
 
         <!-- Right aligned nav items -->
         <b-navbar-nav class="ml-auto">
@@ -30,5 +31,27 @@
     </b-container>
   </div>
 </template>
+
+<script>
+export default {
+  computed: {
+    isActive() {
+      return (path) => {
+        // JSON数据
+        if(path == '/') {
+          if(this.$route.path == '/') return true
+          if(this.$route.path.indexOf('/category')==0) return true
+          return false
+        }
+        // 其他导航栏
+        else {
+          if(this.$route.path.indexOf(path) == 0) return true
+          return false
+        }
+      }
+    }
+  }
+}
+</script>
 
 

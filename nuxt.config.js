@@ -58,7 +58,7 @@ export default {
   },
 
   router: {
-    base: routerPrefix // 应用的根 URL
+    base: routerPrefix, // 应用的根 URL
   },
   
   server: {
