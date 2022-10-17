@@ -12,7 +12,11 @@ const storage = multer.diskStorage({
   },
   // 上传文件名称
   filename: (req, file, cb) => {
-    cb(null, new Date().getTime() + '_' + Math.random().toString(36).slice(-10) + '_' + file.originalname)
+    // 解决中文乱码
+    let fileName = Buffer.from(file.originalname, "latin1").toString(
+      "utf8"
+    )
+    cb(null, new Date().getTime() + '_' + Math.random().toString(36).slice(-10) + '_' + fileName)
   }
 
 })
@@ -22,7 +26,6 @@ exports.upload = multer({storage})
 
 // 文件上传
 exports.uploadFile = async (req, res, next) => {
-  
   const result = req.file
   let jsonObj = {}
 	if(result === false) {

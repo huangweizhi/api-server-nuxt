@@ -142,6 +142,7 @@ export default {
       // 校验
       const formData = new FormData()
       formData.append("file", file) // 上传的key值 file
+      formData.append("name", file.name) // 上传的key值 file
       this.$axios.post('/api/handle/image/upload', formData, {
         'Content-type': 'multipart/form-data'
       }).then(res=>{
