@@ -6,7 +6,6 @@
         <nuxt-link to="/">项目</nuxt-link> / <span>{{dirName}}</span>
       </template>
       <template v-slot:right>
-        <b-button size="sm" variant="info" @click="getData">刷新</b-button>
         <b-button size="sm" variant="success" @click="showAdd">新建接口</b-button>
       </template>
     </TableHeader>
@@ -128,10 +127,18 @@ export default {
   async asyncData({ $axios, params, env }) {
     const dirName = params.name
     let {data} = await $axios.$get(`/api/handle/api/${dirName}`)
+
+    let baseURL
+    if(env.NODE_ENV === 'prod') {
+      baseURL = $axios.defaults.baseURL + `/mock/api/${dirName}`
+    }else {
+      baseURL =$axios.defaults.baseURL + `/api/${dirName}`
+    }
+
     // 返回的数据会传递到data()
     return { 
       items: data, 
-      baseURL: $axios.defaults.baseURL + `/api/${dirName}`,
+      baseURL,
       dirName,
       env
     }

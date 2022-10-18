@@ -1,4 +1,4 @@
-const {makeDir, deleteDir, getDir, renameDir} = require('../dao/file')
+const {makeDir, deleteDir, getDir, renameDir} = require('../dao/file-api')
 
 /**
  * 添加分类

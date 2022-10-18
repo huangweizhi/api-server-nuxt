@@ -1,4 +1,4 @@
-const {saveFile, editFile, getFile, readFile, deleteFile} = require('../dao/file')
+const {saveFile, editFile, getFile, readFile, deleteFile} = require('../dao/file-api')
 const {splitStr} = require('../settings')
 
 /**

@@ -6,7 +6,7 @@
 // fs.exists() && fs.existsSync() 检测目录是否存在
 
 const fs = require('fs')
-const {basePath} = require('../settings') // 文件存放路径
+const {API_PATH} = require('../settings') // 文件存放路径
 
 /**
  * 保存文件
@@ -17,7 +17,7 @@ const {basePath} = require('../settings') // 文件存放路径
  */
 exports.saveFile = (dirName, fileName, content) => {
   return new Promise((resolve, reject) => {
-    const path = `${basePath}/${dirName}/${fileName}`
+    const path = `${API_PATH}/${dirName}/${fileName}`
     // 文件已存在
     if(fs.existsSync(path)) {
       resolve (false)
@@ -41,7 +41,7 @@ exports.saveFile = (dirName, fileName, content) => {
  */
 exports.getFile = (dirName) => {
   return new Promise((resolve, reject) => {
-    const path = `${basePath}/${dirName}`
+    const path = `${API_PATH}/${dirName}`
 
     try {
       const files = fs.readdirSync(path)
@@ -72,7 +72,7 @@ exports.getFile = (dirName) => {
  */
  exports.editFile = (dirName, fileName, content) => {
   return new Promise((resolve, reject) => {
-    const path = `${basePath}/${dirName}/${fileName}`
+    const path = `${API_PATH}/${dirName}/${fileName}`
 
     fs.writeFile(path, content, (err) => {
       if(err) {
@@ -93,7 +93,7 @@ exports.getFile = (dirName) => {
  */
 exports.readFile = (dirName, fileName) => {
   return new Promise((resolve, reject) => {
-    const path = `${basePath}/${dirName}/${fileName}`
+    const path = `${API_PATH}/${dirName}/${fileName}`
 
     fs.readFile(path, function(err, data) {
       if(err) {
@@ -115,7 +115,7 @@ exports.readFile = (dirName, fileName) => {
  */
 exports.deleteFile = (dirName, fileName) => {
   return new Promise((resolve, reject) => {
-    const path = `${basePath}/${dirName}/${fileName}`
+    const path = `${API_PATH}/${dirName}/${fileName}`
 
     fs.unlink(path, function(err) {
       if(err) {
@@ -137,7 +137,7 @@ exports.deleteFile = (dirName, fileName) => {
  */
 exports.makeDir = (dirName) => {
   return new Promise((resolve, reject) => {
-    const path = `${basePath}/${dirName}`
+    const path = `${API_PATH}/${dirName}`
     
     fs.mkdir(path, (err) => {
       if(err) {
@@ -156,10 +156,10 @@ exports.makeDir = (dirName) => {
 exports.getDir = () => {
   return new Promise((resolve, reject) => {
     try {
-      const files = fs.readdirSync(basePath)
+      const files = fs.readdirSync(API_PATH)
       let dirs = []
       files.forEach(file => {
-        const filePath = `${basePath}/${file}`
+        const filePath = `${API_PATH}/${file}`
         const stats = fs.statSync(filePath)
         if(stats.isDirectory()) {
           // 文件夹
@@ -182,8 +182,8 @@ exports.getDir = () => {
  */
  exports.renameDir = (oldName, dirName) => {
   return new Promise((resolve, reject) => {
-    const oldPath = `${basePath}/${oldName}`
-    const path = `${basePath}/${dirName}`
+    const oldPath = `${API_PATH}/${oldName}`
+    const path = `${API_PATH}/${dirName}`
 
     fs.rename(oldPath, path, (err) => {
       if(err) {
@@ -229,7 +229,7 @@ const deleteFolder = (path) => {
  * @returns Boolean
  */
 exports.deleteDir = (dirName) => {
-  const path = `${basePath}/${dirName}`
+  const path = `${API_PATH}/${dirName}`
   return new Promise((resolve, reject) => {
     const res =  deleteFolder(path)
     if(res) {

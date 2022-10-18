@@ -16,7 +16,7 @@ const handleImageRouter = require('./routes/handle-image')
 
 app.use('/handle/category', handleCategoryRouter) // 分类管理
 app.use('/handle/api', handleApiRouter) // api接口管理
-app.use('/handle/image', handleImageRouter) // 图片上传
+app.use('/image', handleImageRouter) // 图片
 app.use('/', apiRouter) // api接口服务
 
 

@@ -1,6 +1,7 @@
 const multer = require('multer')
 const fs = require('fs')
 const {UPLOAD_PATH} = require('../settings') // 上传文件路径
+const {getFile, deleteFile} = require('../dao/file-image')
 
 // 文件上传路径
 const uploadPath = UPLOAD_PATH
@@ -55,50 +56,62 @@ exports.uploadFile = async (req, res, next) => {
   res.json(jsonObj)
 }
 
-//删除文件
-const doDeleteFile = (name) => {
-  return new Promise((resolve, reject) => {
-    fs.unlink(uploadPath + '/' + name, function(err) {
-      if(err) {
-        console.error('删除文件', err)
-        resolve(false)
-        return
-      }
-      resolve(true)
-    })
-  })
-}
-exports.doDeleteFile = doDeleteFile
-
-// 删除文件
+// 删除上传的文件
 exports.deleteFile = async (req, res, next) => {
-  
-  let jsonObj = {}
-  const result = await doDeleteFile(req.params.name)
-  if(result === false) {
-    jsonObj = {
-      status: 500,
-      flag: false,
-      data: null,
-      message: "删除文件失败"
-    }
-  }
-  else if(result) {
-    jsonObj = {
+  const result = await deleteFile(req.params.name)
+  if(result) {
+    res.json({
       status: 200,
       flag: true,
       data: result,
       message: "删除文件成功"
-    }
+    })
   }else {
-    jsonObj = {
-      status: 403,
+    res.json({
+      status: 500,
       flag: false,
       data: result,
       message: "删除文件失败"
-    }
+    })
   }
   
-  res.json(jsonObj)
 }
 
+// 获取文件列表
+exports.getFileList = async (req, res, next) => {
+  const result = await getFile()
+  if(result) {
+    res.json({
+      status: 200,
+      flag: true,
+      data: result,
+      message: "获取文件列表成功"
+    })
+  }else {
+    res.json({
+      status: 500,
+      flag: false,
+      data: result,
+      message: "获取文件列表失败"
+    })
+  }
+}
+
+// 下载文件
+exports.downloadFile = async (req, res, next) => {
+  const path = UPLOAD_PATH + `/${req.params.name}`
+
+  const cr = fs.createReadStream(path, {
+    // highWaterMark: 64*1024, // 文件一次读多少字节, 默认 64*1024
+    flags: 'r', // 默认 'r'
+    autoClose: true, // 默认读取完毕后自动关闭
+    // start: 0, // 读取文件开始位置
+    // end: 3, // 流是闭合区间 包含start也含end
+    // encoding: 'utf8' // 默认null
+  })
+  cr.on('error',(err)=>{
+    console.error('下载文件', err)
+    res.send(err)
+  })
+  cr.pipe(res)
+}

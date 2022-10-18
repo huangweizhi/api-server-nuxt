@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 
-const {readFile} = require('../dao/file')
+const {readFile} = require('../dao/file-api')
 const {splitStr} = require('../settings')
 
 /**

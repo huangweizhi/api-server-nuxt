@@ -11,7 +11,7 @@
 
       <b-collapse id="nav-collapse" is-nav>
         <b-navbar-nav>
-          <b-nav-item to="/" :active="isActive('/')">JSON数据</b-nav-item>
+          <b-nav-item to="/" :active="isActive('/')">JSON格式</b-nav-item>
           <b-nav-item to="/image" :active="isActive('/image')">图片</b-nav-item>
         </b-navbar-nav>
 
@@ -37,7 +37,7 @@ export default {
   computed: {
     isActive() {
       return (path) => {
-        // JSON数据
+        // JSON格式
         if(path == '/') {
           if(this.$route.path == '/') return true
           if(this.$route.path.indexOf('/category')==0) return true

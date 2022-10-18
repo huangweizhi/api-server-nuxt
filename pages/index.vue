@@ -6,7 +6,6 @@
         <span>项目</span>
       </template>
       <template v-slot:right>
-        <b-button size="sm" variant="info" @click="getData">刷新</b-button>
         <b-button size="sm" variant="success" @click="showAdd">新建项目</b-button>
       </template>
     </TableHeader>

@@ -3,7 +3,6 @@
     <!-- 标题 -->
     <TableHeader>
       <template v-slot:right>
-        <b-button size="sm" variant="info" @click="getData">刷新</b-button>
         <div class="file">
           <b-form-file
             v-model="file"
@@ -11,7 +10,7 @@
             placeholder="选择或拖拽图片"
             drop-placeholder="拖拽到这里..."
             size="sm"
-            browse-text="上传"
+            browse-text="选择"
             @change="changeFile"
           ></b-form-file>
         </div>
@@ -32,21 +31,24 @@
       <!-- 序号 -->
       <template #cell(index)="row">{{row.index+1}}</template>
       <!-- 路径 -->
-      <template #cell(path)="row">{{baseURL + row.item.path}}</template>
+      <template #cell(path)="row">{{baseURL + row.item}}</template>
+      <!-- 图片 -->
+      <template #cell(image)="row">
+        <img class="table-img" :src="baseURL + row.item" @click="showDetail(row.item)" />
+      </template>
       <!-- 操作栏 -->
       <template #cell(todo)="row">
         <b-button size="sm" variant="danger" @click="showDelete(row.item)">删除</b-button>
-        <b-button size="sm" variant="info" @click="showDetail(row.item)">查看</b-button>
       </template>
     </b-table>
 
     <!-- 删除 -->
     <b-modal
       v-model="deleteModalShow"
-      title="删除接口"
+      title="删除图片"
       @ok="handleDeleteOk"
     >
-      确定删除该接口吗？
+      确定删除该图片吗？
       <template #modal-cancel>取消</template>
       <template #modal-ok>确定</template>
     </b-modal>
@@ -54,11 +56,10 @@
     <!-- 查看 -->
     <b-modal
       v-model="detailModalShow"
-      title="接口响应内容"
-      @hidden="resetDetailModal"
+      title="图片"
       size="lg"
     >
-      <pre>{{apiDetail}}</pre>
+      <img class="show-img" :src="showImageUrl" />
       <template #modal-cancel>取消</template>
       <template #modal-ok>确定</template>
     </b-modal>
@@ -67,18 +68,21 @@
 </template>
 
 <script>
-import {splitStr} from '@/api/settings'
-
 export default {
   layout: 'common-layout',
-  async asyncData({ $axios, params, env }) {
-    const dirName = params.name || 'test'
-    let {data} = await $axios.$get(`/api/handle/api/${dirName}`)
+  async asyncData({ $axios, env }) {
+    let baseURL
+    if(env.NODE_ENV === 'prod') {
+      baseURL = $axios.defaults.baseURL + '/mock/api/image/'
+    }else {
+      baseURL = $axios.defaults.baseURL + '/api/image/'
+    }
+
+    let {data} = await $axios.$get('/api/image')
     // 返回的数据会传递到data()
     return { 
       items: data, 
-      baseURL: $axios.defaults.baseURL + `/api/${dirName}`,
-      dirName,
+      baseURL,
       env
     }
   },
@@ -86,13 +90,12 @@ export default {
     return {
       // 展示用的基础路径
       baseURL: '',
-      dirName: '',
 
       // 表格数据
       fields: [
         {key: 'index', label: '#'},
-        {key: 'path', label: '图片路径'},
-        {key: 'method', label: '图片'},
+        {key: 'path', label: '路径'},
+        {key: 'image', label: '图片'},
         {key: 'todo', label: '操作'}
       ],
       items: [],
@@ -102,18 +105,18 @@ export default {
 
       // 删除
       deleteModalShow: false,
-      deleteAPI: {},
+      deleteImage: {},
 
       // 查看
       detailModalShow: false,
-      apiDetail: ''
+      showImageUrl: ''
     }
   },
   mounted() {
     if(this.env.NODE_ENV === 'prod') {
-      this.baseURL = window.location.origin + `/mock/api/${this.dirName}`
+      this.baseURL = window.location.origin + '/mock/api/image/'
     }else {
-      this.baseURL = window.location.origin + `/api/${this.dirName}`
+      this.baseURL = window.location.origin + '/api/image/'
     }
     
   },
@@ -122,7 +125,7 @@ export default {
      * 获取数据
      */
     async getData() {
-      let {data: res} = await this.$axios.get(`/api/handle/api/${this.dirName}`)
+      let {data: res} = await this.$axios.get('/api/image')
       if(!res.flag) {
         this.$bvToast.toast(res.message, {
           title: '提示',
@@ -137,33 +140,53 @@ export default {
     /**
      * 上传
      */
-    changeFile(event) {
+    async changeFile(event) {
       const file = event.type == 'drop' ? event.dataTransfer.files[0] : event.target.files[0] 
+      // 判断是否是图片文件
+      if(!/\.(gif|jpg|jpeg|png)$/i.test(file.name)) {
+        this.$bvToast.toast('不支持该格式的文件！', {
+          title: '提示',
+          variant: 'warning',
+          autoHideDelay: 2500
+        })
+        return
+      }
       // 校验
       const formData = new FormData()
       formData.append("file", file) // 上传的key值 file
-      formData.append("name", file.name) // 上传的key值 file
-      this.$axios.post('/api/handle/image/upload', formData, {
+
+      let {data: res} = await this.$axios.post('/api/image', formData, {
         'Content-type': 'multipart/form-data'
-      }).then(res=>{
-        console.log(res)
-      },err=>{
-        console.log(err)
-      }) 
+      })
+
+      if(!res.flag) {
+        this.$bvToast.toast(res.message, {
+          title: '提示',
+          variant: 'danger',
+          autoHideDelay: 2500
+        })
+        return
+      }
+      this.$bvToast.toast(res.message, {
+        title: '提示',
+        variant: 'success',
+        autoHideDelay: 2500
+      })
+      // 刷新数据
+      this.getData()
     },
 
     /**
      * 删除
      */
     showDelete(item) {
-      this.deleteAPI = item
+      this.deleteImage = item
       this.deleteModalShow = true
     },
     async handleDeleteOk() {
-      const {deleteAPI} = this
-      // 文件名
-      const fileName = deleteAPI.path.split('/').join(splitStr) + '.' + deleteAPI.method
-      let {data: res} = await this.$axios.delete(`/api/handle/api/${this.dirName}/${fileName}`)
+      // 图片文件名
+      const {deleteImage} = this
+      let {data: res} = await this.$axios.delete(`/api/image/${deleteImage}`)
       if(!res.flag) {
         this.$bvToast.toast(res.message, {
           title: '提示',
@@ -189,15 +212,10 @@ export default {
      * 查看
      */
     async showDetail(item) {
-      // 文件名
-      const fileName = item.path.split('/').join(splitStr) + '.' + item.method
-      let {data: res} = await this.$axios.get(`/api/handle/api/${this.dirName}/${fileName}`)
-      this.apiDetail = res
+      // 查看图片
+      this.showImageUrl = this.baseURL + item
       this.detailModalShow = true
     },
-    resetDetailModal() {
-      this.apiDetail = ''
-    }
 
   }
 }
@@ -206,5 +224,13 @@ export default {
 <style scoped>
 .file {
   display: inline-block;
+}
+.table-img {
+  width: 60px;
+  cursor: pointer;
+}
+
+.show-img {
+  width: 100%;
 }
 </style>
